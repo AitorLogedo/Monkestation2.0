@@ -4,6 +4,7 @@
 	var/category
 	var/verb_path
 	var/body_path
+	/// If TRUE, this verb uses `set src` (it lives on something the user can reach, not on the user), so it isn't sent to the command bar verb list
 	var/src_based = FALSE
 	var/list/arguments = list()
 
@@ -19,6 +20,7 @@
 	var/type_path
 	var/source
 	var/list/options
+	/// If set, only things within this many tiles of the user are valid targets for this argument, otherwise their whole view is used
 	var/view_range
 
 /datum/verb_arg_metadata/proc/prompt(client/user, verb_name)
@@ -131,6 +133,12 @@
 
 GLOBAL_LIST_INIT(____pending_verb_args, list())
 
+/**
+ * Registers an argument for a verb, called by the VERB_ARG macros
+ *
+ * Admin verbs are keyed by their datum type, game verbs by their proc path.
+ * arg_view_range limits valid targets to that many tiles around the user, null means their whole view
+ */
 /proc/____register_verb_arg(owner_type, proc_path, arg_name, arg_type, arg_type_path, arg_source, arg_view_range)
 	var/verb_key
 	if(ispath(owner_type, /datum/admin_verb))
