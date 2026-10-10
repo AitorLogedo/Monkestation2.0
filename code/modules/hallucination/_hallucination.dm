@@ -140,6 +140,7 @@
 		return
 	SET_PLANE(shown_image, PLANE_TO_TRUE(shown_image.plane), new_turf)
 
+/// Adds a mob to the list of mobs that can see our image, and shows it to them
 /obj/effect/client_image_holder/proc/add_seer(mob/new_seer)
 	RegisterSignal(new_seer, COMSIG_MOB_LOGIN, PROC_REF(show_image_to))
 	RegisterSignal(new_seer, COMSIG_QDELETING, PROC_REF(remove_seer))

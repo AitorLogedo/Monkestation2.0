@@ -4,8 +4,11 @@
 /datum/element/nav_computer_icon
 	element_flags = ELEMENT_BESPOKE
 	argument_hash_start_idx = 2
+	/// The icon file of the image shown on the navigation computer
 	var/use_icon
+	/// The icon state of the image shown on the navigation computer
 	var/use_icon_state
+	/// If TRUE, the image is only shown when the atom is on the edge of the shuttle
 	var/only_show_on_shuttle_edge
 
 /datum/element/nav_computer_icon/Attach(datum/target, use_icon, use_icon_state, only_show_on_shuttle_edge)
@@ -19,6 +22,7 @@
 
 	RegisterSignal(target, COMSIG_SHUTTLE_NAV_COMPUTER_IMAGE_REQUESTED, PROC_REF(provide_image))
 
+/// Adds the image of this atom to the list of images shown by the navigation computer
 /datum/element/nav_computer_icon/proc/provide_image(datum/source, list/images_out)
 	SIGNAL_HANDLER
 	var/obj/source_obj = source

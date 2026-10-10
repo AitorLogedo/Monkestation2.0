@@ -3,6 +3,7 @@
 	shuttleId = ""
 	possible_destinations = "whiteship_home;"
 	circuit = /obj/item/circuitboard/computer/shuttle/flight_control
+	/// Signals registered on our turf while we are not linked to a shuttle yet
 	var/static/list/connections = list(COMSIG_TURF_ADDED_TO_SHUTTLE = PROC_REF(on_loc_added_to_shuttle))
 
 /obj/machinery/computer/shuttle/custom_shuttle/on_construction(mob/user)
@@ -10,6 +11,7 @@
 	if(!shuttleId)
 		AddElement(/datum/element/connect_loc, connections)
 
+/// Links the console to the custom shuttle that our turf just became part of
 /obj/machinery/computer/shuttle/custom_shuttle/proc/on_loc_added_to_shuttle(turf/source, obj/docking_port/mobile/custom/port)
 	SIGNAL_HANDLER
 	if(!istype(port))
@@ -31,6 +33,7 @@
 		custom_port.control_console = WEAKREF(src)
 	name = "[port.name] console"
 
+/// Links the console to the shuttle with the given id if it has none yet, returns TRUE if it worked
 /obj/machinery/computer/shuttle/custom_shuttle/proc/linkShuttle(new_id)
 	if(shuttleId=="")
 		shuttleId = new_id
@@ -45,6 +48,7 @@
 	designate_time = 100
 	circuit = /obj/item/circuitboard/computer/shuttle/docker
 	zlink_range = 1
+	/// Signals registered on our turf while we are not linked to a shuttle yet
 	var/static/list/connections = list(COMSIG_TURF_ADDED_TO_SHUTTLE = PROC_REF(on_loc_added_to_shuttle))
 
 /obj/machinery/computer/camera_advanced/shuttle_docker/custom/on_construction(mob/user)
@@ -52,6 +56,7 @@
 	if(!shuttleId)
 		AddElement(/datum/element/connect_loc, connections)
 
+/// Links the navigation console to the custom shuttle that our turf just became part of
 /obj/machinery/computer/camera_advanced/shuttle_docker/custom/proc/on_loc_added_to_shuttle(turf/source, obj/docking_port/mobile/custom/port)
 	SIGNAL_HANDLER
 	if(!istype(port))
@@ -87,6 +92,7 @@
 	RegisterSignal(port, COMSIG_SHUTTLE_EXPANDED, PROC_REF(on_shuttle_expanded))
 	recalculate_eye_view(port)
 
+/// Called when the linked shuttle gets bigger, updates the view range and gets rid of our custom landing spot if the bigger shuttle no longer fits on it
 /obj/machinery/computer/camera_advanced/shuttle_docker/custom/proc/on_shuttle_expanded(obj/docking_port/mobile/source, list/turfs)
 	SIGNAL_HANDLER
 	recalculate_eye_view(source)
@@ -134,6 +140,7 @@
 					QDEL_NULL(my_port)
 				break
 
+/// Makes the view range of the camera big enough to see the whole shuttle
 /obj/machinery/computer/camera_advanced/shuttle_docker/custom/proc/recalculate_eye_view(obj/docking_port/mobile/shuttle)
 	var/bigger_shuttle_dimension = max(shuttle.width, shuttle.height)
 	var/list/viewsize = getviewsize(world.view)
@@ -168,6 +175,7 @@
 		return
 	return ..()
 
+/// Links the navigation console to the shuttle with the given id if it has none yet, returns TRUE if it worked
 /obj/machinery/computer/camera_advanced/shuttle_docker/custom/proc/linkShuttle(new_id)
 	if(shuttleId=="")
 		shuttleId = new_id

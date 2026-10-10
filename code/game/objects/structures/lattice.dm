@@ -93,6 +93,7 @@
 	if(current_size >= STAGE_FOUR)
 		deconstruct()
 
+/// Replaces the lattice with a catwalk, calling any callbacks added through COMSIG_LATTICE_PRE_REPLACE_WITH_CATWALK with the new catwalk
 /obj/structure/lattice/proc/replace_with_catwalk()
 	var/list/post_replacement_callbacks = list()
 	SEND_SIGNAL(src, COMSIG_LATTICE_PRE_REPLACE_WITH_CATWALK, post_replacement_callbacks)

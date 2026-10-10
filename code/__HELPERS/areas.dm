@@ -9,11 +9,11 @@ GLOBAL_LIST_INIT(typecache_powerfailure_safe_areas, typecacheof(list(
 	/area/station/ai_monitored/turret_protected/ai,
 )))
 
-// Gets an atmos isolated contained space
-// Returns an associative list of turf|dirs pairs
-// The dirs are connected turfs in the same space
-// break_if_found is a typecache of turf/area types to return false if found
-// Please keep this proc type agnostic. If you need to restrict it do it elsewhere or add an arg.
+/// Gets an atmos isolated contained space
+/// Returns an associative list of turf|dirs pairs
+/// The dirs are connected turfs in the same space
+/// break_if_found is a typecache of turf/area types to return false if found
+/// Please keep this proc type agnostic. If you need to restrict it do it elsewhere or add an arg.
 /proc/detect_room(turf/origin, list/break_if_found = list(), max_size=INFINITY, datum/callback/extra_check)
 	if(origin.blocks_air)
 		return list(origin)
@@ -86,6 +86,7 @@ GLOBAL_LIST_INIT(typecache_powerfailure_safe_areas, typecacheof(list(
 			return
 		counter += 1 //increment by one so the next loop will start at the next position in the list
 
+/// Moves every turf in the list to new_area, filling affected_areas with the areas they came from (keyed by name)
 /proc/set_turfs_to_area(list/turf/turfs, area/new_area, list/area/affected_areas = list())
 	for(var/turf/the_turf as anything in turfs)
 		var/area/old_area = the_turf.loc

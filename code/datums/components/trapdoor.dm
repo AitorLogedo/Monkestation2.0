@@ -58,6 +58,7 @@
 	else
 		on_shuttle = FALSE
 
+/// Returns TRUE if there is a shuttle on top of the trapdoor (the shuttle skipover is below the trapdoor one)
 /datum/component/trapdoor/proc/is_under_shuttle()
 	var/turf/parent_turf = parent
 	var/shuttle_skipover_depth = parent_turf.depth_to_find_baseturf(/turf/baseturf_skipover/shuttle)
@@ -78,6 +79,7 @@
 		var/turf/parent_turf = parent
 		parent_turf.add_overlay(trapdoor_overlay)
 
+/// Adds the trapdoor baseturf skipover right above the shuttle skipover (or the bottom) if we do not have one yet
 /datum/component/trapdoor/proc/insert_trapdoor_skipover()
 	var/turf/parent_turf = parent
 	if(parent_turf.depth_to_find_baseturf(/turf/baseturf_skipover/trapdoor))
@@ -260,11 +262,13 @@
 	trapdoor_baseturfs = null
 	trapdoor_turf.ChangeTurf(trapdoor_turf_path, new_baseturfs, flags = CHANGETURF_INHERIT_AIR | CHANGETURF_TRAPDOOR_INDUCED)
 
+/// Open trapdoors that are not under a shuttle get moved by the shuttle in a special way, see on_move_special()
 /datum/component/trapdoor/proc/should_move_special(datum/source)
 	SIGNAL_HANDLER
 	var/turf/source_turf = source
 	return IS_OPEN(source_turf) && !is_under_shuttle()
 
+/// Moves the trapdoor component to the turf it ended up on after a shuttle move
 /datum/component/trapdoor/proc/on_move_special(datum/source, turf/new_turf)
 	SIGNAL_HANDLER
 	new_turf.TakeComponent(src)

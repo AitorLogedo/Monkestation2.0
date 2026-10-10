@@ -23,6 +23,7 @@ GLOBAL_LIST_EMPTY(shuttle_frames_by_turf)
 	if(initial_turfs)
 		add_turfs(initial_turfs)
 
+/// Starts watching a turf next to the frame (from the given direction) for custom shuttles landing on or leaving it, so the frame knows which shuttles it can expand
 /datum/shuttle_frame/proc/start_tracking_turf_for_shuttles(turf/to_track, dir)
 	if(!shuttle_tracking_turfs[to_track])
 		var/obj/docking_port/mobile/custom/shuttle = SSshuttle.get_containing_shuttle(to_track)
@@ -34,6 +35,7 @@ GLOBAL_LIST_EMPTY(shuttle_frames_by_turf)
 		RegisterSignals(to_track, list(COMSIG_TURF_AFTER_SHUTTLE_MOVE, COMSIG_TURF_ADDED_TO_SHUTTLE), PROC_REF(shuttle_arrive_react))
 	shuttle_tracking_turfs[to_track] |= dir
 
+/// Stops watching a turf for shuttles, and forgets any shuttle that was only being tracked through it
 /datum/shuttle_frame/proc/stop_tracking_turf_for_shuttles(turf/to_stop_tracking)
 	for(var/obj/docking_port/mobile/custom/shuttle as anything in adjacent_shuttles)
 		var/list/turfs_tracking_shuttle = adjacent_shuttles[shuttle]
@@ -44,6 +46,7 @@ GLOBAL_LIST_EMPTY(shuttle_frames_by_turf)
 	shuttle_tracking_turfs -= to_stop_tracking
 	UnregisterSignal(to_stop_tracking, list(COMSIG_TURF_ON_SHUTTLE_MOVE, COMSIG_TURF_REMOVED_FROM_SHUTTLE, COMSIG_TURF_AFTER_SHUTTLE_MOVE, COMSIG_TURF_ADDED_TO_SHUTTLE))
 
+/// Called when a shuttle leaves a tracked turf, forgets the shuttle once it no longer touches any of our tracked turfs
 /datum/shuttle_frame/proc/shuttle_leave_react(turf/source)
 	SIGNAL_HANDLER
 	for(var/obj/docking_port/mobile/custom/shuttle as anything in adjacent_shuttles)
@@ -54,6 +57,7 @@ GLOBAL_LIST_EMPTY(shuttle_frames_by_turf)
 				stop_tracking_shuttle(shuttle)
 			break
 
+/// Called when a shuttle arrives on a tracked turf, starts tracking that shuttle as adjacent to the frame
 /datum/shuttle_frame/proc/shuttle_arrive_react(turf/source)
 	SIGNAL_HANDLER
 	var/obj/docking_port/mobile/custom/shuttle = SSshuttle.get_containing_shuttle(source)
@@ -61,12 +65,15 @@ GLOBAL_LIST_EMPTY(shuttle_frames_by_turf)
 		start_tracking_shuttle(shuttle)
 	adjacent_shuttles[shuttle][source] = TRUE
 
+/// Adds a shuttle to the list of shuttles adjacent to this frame
 /datum/shuttle_frame/proc/start_tracking_shuttle(obj/docking_port/mobile/custom/shuttle)
 	adjacent_shuttles[shuttle] = list()
 
+/// Removes a shuttle from the list of shuttles adjacent to this frame
 /datum/shuttle_frame/proc/stop_tracking_shuttle(obj/docking_port/mobile/custom/shuttle)
 	adjacent_shuttles -= shuttle
 
+/// Adds a turf to the frame, and starts watching its neighbors for adjacent shuttles
 /datum/shuttle_frame/proc/add_turf(turf/new_turf)
 	if(GLOB.shuttle_frames_by_turf[new_turf])
 		stack_trace("turf already assigned to shuttle frame")
@@ -85,16 +92,20 @@ GLOBAL_LIST_EMPTY(shuttle_frames_by_turf)
 			continue
 		start_tracking_turf_for_shuttles(neighbor, REVERSE_DIR(dir))
 
+/// Called when a shuttle lands on one of our turfs
 /datum/shuttle_frame/proc/shuttle_cover_react(turf/source)
 	shuttle_covered_turfs[source] = TRUE
 
+/// Called when a shuttle leaves one of our turfs
 /datum/shuttle_frame/proc/shuttle_uncover_react(turf/source)
 	shuttle_covered_turfs -= source
 
+/// Calls add_turf() on every turf in the list
 /datum/shuttle_frame/proc/add_turfs(list/turfs)
 	for(var/turf in turfs)
 		add_turf(turf)
 
+/// Removes a turf from the frame, unless it is in the middle of changing into something that may still be valid. Deletes the frame once it has no turfs left, otherwise checks next tick if the frame got split in two
 /datum/shuttle_frame/proc/remove_turf(turf/removed_turf)
 	if(possibly_valid_changing_turfs[removed_turf])
 		return
@@ -117,10 +128,17 @@ GLOBAL_LIST_EMPTY(shuttle_frames_by_turf)
 	else
 		addtimer(CALLBACK(src, PROC_REF(auto_propagate_turf_removal)), 0, TIMER_UNIQUE | TIMER_DELETE_ME)
 
+/// Calls remove_turf() on every turf in the list
 /datum/shuttle_frame/proc/remove_turfs(list/turfs)
 	for(var/turf in turfs)
 		remove_turf(turf)
 
+/**
+ * Checks if removing turfs split the frame into several disconnected pieces
+ *
+ * Flood fills from each of the deferred update turfs, merging the fills that touch each other.
+ * If more than one piece is left, every piece but the first is moved to a new frame.
+ */
 /datum/shuttle_frame/proc/auto_propagate_turf_removal()
 	var/list/islands = list()
 	var/list/island_queues = list()
@@ -178,6 +196,7 @@ GLOBAL_LIST_EMPTY(shuttle_frames_by_turf)
 		remove_turfs(other_island)
 		new /datum/shuttle_frame(other_island)
 
+/// Puts a new shuttle construction turf into the frame next to it, makes a new frame if there is none, or merges all the adjacent frames into one if there are several
 /proc/assign_shuttle_construction_turf_to_frame(turf/new_turf)
 	var/list/adjacent_frames = list()
 	for(var/dir in GLOB.cardinals)
@@ -255,6 +274,7 @@ GLOBAL_LIST_EMPTY(shuttle_frames_by_turf)
 		Max Combined Width: [height + dheight] \n\
 		Max Combinded Height [width + dwidth]")
 
+/// Extra room check used when detecting rooms on a custom shuttle, skips turfs that are not on the shuttle, in another area, or that would not move with it
 /proc/custom_shuttle_room_check(obj/docking_port/mobile/custom/shuttle, list/neighboring_areas = list(), turf/check_turf)
 	if(SSshuttle.get_containing_shuttle(check_turf) != shuttle)
 		return EXTRA_ROOM_CHECK_SKIP
@@ -274,6 +294,16 @@ GLOBAL_LIST_EMPTY(shuttle_frames_by_turf)
 	if(!(move_mode & (MOVE_CONTENTS | MOVE_TURF)))
 		return EXTRA_ROOM_CHECK_SKIP
 
+/**
+ * Checks if a new custom shuttle can be built from the frame at origin
+ *
+ * Arguments:
+ * * origin - The turf the shuttle is being built from
+ * * turfs - If not empty, use these turfs instead of the frame at origin. Gets filled with the turfs the shuttle would have
+ * * areas - Gets filled with the custom areas the shuttle would take
+ *
+ * Returns a bitfield of the problems found, or 0 if the shuttle can be built
+ */
 /proc/shuttle_build_check(turf/origin, list/turfs, list/areas)
 	var/z = origin.z
 	var/using_prepassed_turfs = !!length(turfs)
@@ -293,6 +323,11 @@ GLOBAL_LIST_EMPTY(shuttle_frames_by_turf)
 		. |= ABOVE_MAX_SHUTTLE_SIZE
 	. |= shuttle_area_check(turfs.Copy(), areas, z)
 
+/**
+ * Like shuttle_build_check(), but for adding the frame at origin to an existing shuttle
+ *
+ * Returns a bitfield of the problems found, or 0 if the shuttle can be expanded
+ */
 /proc/shuttle_expand_check(turf/origin, obj/docking_port/mobile/shuttle, list/turfs, list/areas)
 	var/z = origin.z
 	var/using_prepassed_turfs = !!length(turfs)
@@ -354,6 +389,7 @@ GLOBAL_LIST_EMPTY(shuttle_frames_by_turf)
 				. |= CONTAINS_APC_OF_NON_CUSTOM_AREA
 		turfs -= area_turfs
 
+/// Makes a new shuttle area for each of the custom areas in in_areas and moves their turfs into it, remembering the previous areas of those turfs in underlying_areas
 /proc/convert_areas_to_shuttle_areas(list/turfs, list/in_areas, list/out_areas, list/underlying_areas, area_type = /area/shuttle/custom)
 	for(var/area/area as anything in in_areas)
 		var/area/new_area = new area_type()
@@ -373,6 +409,13 @@ GLOBAL_LIST_EMPTY(shuttle_frames_by_turf)
 		if(!area.has_contained_turfs())
 			qdel(area)
 
+/**
+ * Creates a new mobile docking port and shuttle out of the given turfs and areas
+ *
+ * If dock_at is not a stationary docking port, a temporary one is made at origin and deleted once the shuttle leaves.
+ *
+ * Returns the new mobile docking port
+ */
 /proc/create_shuttle(mob/user, turf/origin, list/turfs, list/areas, shuttle_dir, port_dir = NORTH, area_type = /area/shuttle/custom, docking_port_type = /obj/docking_port/mobile/custom, obj/docking_port/stationary/dock_at, name, id, replace, custom = TRUE, force)
 	if(!ispath(docking_port_type, /obj/docking_port/mobile))
 		CRASH("docking_port_type must be /obj/docking_port/mobile or a subpath")
@@ -444,6 +487,7 @@ GLOBAL_LIST_EMPTY(shuttle_frames_by_turf)
 
 	return mobile_port
 
+/// Adds the given turfs and areas to an existing shuttle, and recalculates its bounds and docking port
 /proc/expand_shuttle(mob/user, obj/docking_port/mobile/shuttle, list/turfs, list/areas)
 	var/list/default_area_turfs = turfs.Copy()
 	// Convert each custom area into a shuttle area, then remove the affected turfs from the list of turfs to add to the default area
@@ -503,6 +547,7 @@ GLOBAL_LIST_EMPTY(shuttle_frames_by_turf)
 	message_admins("[key_name(user)] has expanded [shuttle] at [ADMIN_VERBOSEJMP(user)].")
 	log_shuttle("[key_name(user)] expanded [shuttle] at [get_area(user)].")
 
+/// Removes the turfs of a shuttle that no longer have anything that would move with it, deleting the shuttle if nothing is left
 /proc/clear_empty_shuttle_turfs(obj/docking_port/mobile/shuttle)
 	var/shuttle_z = shuttle.z
 	var/bounds_need_recalculation

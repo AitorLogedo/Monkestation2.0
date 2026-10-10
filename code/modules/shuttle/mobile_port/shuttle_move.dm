@@ -105,6 +105,7 @@
 	remove_ripples()
 	return DOCKING_SUCCESS
 
+/// Works out what moves with the shuttle on each turf (stored in old_turfs) and makes sure the destination is valid, returns a DOCKING_ define
 /obj/docking_port/mobile/proc/preflight_check(list/old_turfs, list/new_turfs, list/areas_to_move, list/underlying_areas, rotation)
 	for(var/i in 1 to length(old_turfs))
 		CHECK_TICK
@@ -135,6 +136,7 @@
 
 		old_turfs[oldT] = move_mode
 
+/// Moves the turfs, areas and contents of the shuttle to the new turfs, filling moved_atoms with everything that moved
 /obj/docking_port/mobile/proc/takeoff(list/old_turfs, list/new_turfs, list/moved_atoms, rotation, movement_direction, old_dock, area/fallback_area)
 	for(var/i in 1 to length(old_turfs))
 		var/turf/oldT = old_turfs[i]
@@ -159,6 +161,7 @@
 		if(move_mode & MOVE_SPECIAL)
 			SEND_SIGNAL(oldT, COMSIG_SHUTTLE_TURF_ON_MOVE_SPECIAL, newT, movement_force, movement_direction, old_dock, src)
 
+/// Called after the shuttle moved, lets the areas, turfs and moved atoms react to the move
 /obj/docking_port/mobile/proc/cleanup_runway(obj/docking_port/stationary/new_dock, list/old_turfs, list/new_turfs, list/areas_to_move, list/underlying_areas, list/moved_atoms, rotation, movement_direction, area/fallback_area)
 	fallback_area.afterShuttleMove(0)
 	for(var/i in 1 to underlying_areas.len)

@@ -55,6 +55,7 @@
 	///List of shuttle events that can run or are running
 	var/list/datum/shuttle_event/event_list = list()
 
+	/// The area each of our turfs was in before becoming part of the shuttle, keyed by turf. Turfs go back to these areas when the shuttle leaves
 	var/list/underlying_areas_by_turf = list()
 
 	///How many turfs this shuttle has. Used to check against max shuttle size when expanding expandable shuttles.

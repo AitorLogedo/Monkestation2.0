@@ -8,8 +8,11 @@
 
 /datum/proximity_monitor/advanced/shuttle_construction_visualizer
 	edge_is_a_field = TRUE
+	/// The mob that can see the frame overlays
 	var/mob/user
+	/// Image holders showing the overlay of each turf in the field, keyed by turf
 	var/list/image_holders = list()
+	/// The blueprints this visualizer belongs to
 	var/obj/item/shuttle_blueprints/parent
 
 /datum/proximity_monitor/advanced/shuttle_construction_visualizer/New(atom/_host, range, _ignore_if_not_on_turf)
@@ -21,6 +24,7 @@
 	parent = null
 	QDEL_LIST_ASSOC_VAL(image_holders)
 
+/// Changes who sees the frame overlays, following their view and eye instead of the blueprints
 /datum/proximity_monitor/advanced/shuttle_construction_visualizer/proc/set_user(mob/new_user)
 	if(user)
 		for(var/turf in image_holders)
@@ -43,6 +47,7 @@
 	else
 		unregister_client()
 
+/// Centers the field on the client eye and sizes it to cover their whole view
 /datum/proximity_monitor/advanced/shuttle_construction_visualizer/proc/register_client(client/client)
 	var/atom/eye = client.eye
 	if(eye)
@@ -52,20 +57,24 @@
 	RegisterSignal(client, COMSIG_VIEW_SET, PROC_REF(on_view_set))
 	RegisterSignal(client, COMSIG_CLIENT_SET_EYE, PROC_REF(on_set_eye))
 
+/// Goes back to the blueprints with no range when the user logs out or there is no user
 /datum/proximity_monitor/advanced/shuttle_construction_visualizer/proc/unregister_client()
 	SIGNAL_HANDLER
 	set_host(parent)
 	set_range(0)
 
+/// Called when the user logs back in, starts following their client again
 /datum/proximity_monitor/advanced/shuttle_construction_visualizer/proc/on_user_login(mob/source)
 	SIGNAL_HANDLER
 	register_client(source.client)
 
+/// Resizes the field when the user view size changes
 /datum/proximity_monitor/advanced/shuttle_construction_visualizer/proc/on_view_set(datum/source, new_view)
 	SIGNAL_HANDLER
 	var/list/view_size = getviewsize(new_view)
 	set_range(CEILING(max(view_size[1], view_size[2])/2, 1)+1)
 
+/// Moves the field to the new eye of the user
 /datum/proximity_monitor/advanced/shuttle_construction_visualizer/proc/on_set_eye(datum/source, atom/old_eye, atom/new_eye)
 	SIGNAL_HANDLER
 	set_host(new_eye)
@@ -93,10 +102,12 @@
 		SIGNAL_REMOVETRAIT(TRAIT_SHUTTLE_CONSTRUCTION_TURF)
 	))
 
+/// Called when a turf in the field changes, updates its overlay
 /datum/proximity_monitor/advanced/shuttle_construction_visualizer/proc/on_turf_updated(turf/source)
 	SIGNAL_HANDLER
 	evaluate_turf_overlay(image_holders[source], source)
 
+/// Turfs that are part of a frame are green, or red if they can not become a shuttle (no docking allowed, or holding the APC of a non custom area)
 /datum/proximity_monitor/advanced/shuttle_construction_visualizer/proc/evaluate_turf_overlay(obj/effect/client_image_holder/holder, turf/target)
 	var/area/turf_area = target.loc
 	if(HAS_TRAIT(target, TRAIT_SHUTTLE_CONSTRUCTION_TURF))
@@ -132,18 +143,18 @@
 	attack_verb_simple = list("attack", "bap", "hit")
 	interaction_flags_atom = parent_type::interaction_flags_atom | INTERACT_ATOM_ALLOW_USER_LOCATION | INTERACT_ATOM_IGNORE_MOBILITY
 
+	/// Description when not linked to a shuttle
 	var/base_desc = "A blank sheet of synthetic engineering-grade paper."
+	/// Description when linked to a shuttle
 	var/linked_desc = "A sheet of synthetic engineering-grade paper with shuttle schematics printed on it."
 
-	//A weakref to the mobile docking port of the shuttle these blueprints are linked to, if any.
+	///A weakref to the mobile docking port of the shuttle these blueprints are linked to, if any.
 	var/datum/weakref/shuttle_ref
 
-	//Whether the holder can visualize shuttle frames (and any turfs preventing them from becoming complete shuttles)
+	///Whether the holder can visualize shuttle frames (and any turfs preventing them from becoming complete shuttles)
 	var/visualize_frame_turfs = FALSE
 
-	var/offset_x = 0
-	var/offset_y = 0
-
+	/// Shows the frame turfs around the holder while visualize_frame_turfs is on
 	var/datum/proximity_monitor/advanced/shuttle_construction_visualizer/prox_monitor
 
 /obj/item/shuttle_blueprints/Initialize(mapload)
@@ -162,6 +173,7 @@
 	stop_visualizing(user)
 	qdel(GetComponent(/datum/component/connect_inventory))
 
+/// Called when the holder hits something with a glass bottle, lets them rechristen the shuttle by smashing it against one of its walls
 /obj/item/shuttle_blueprints/proc/christen_check(obj/item/reagent_containers/cup/glass/bottle/source, atom/attacked, mob/living/user)
 	SIGNAL_HANDLER
 	var/obj/docking_port/mobile/custom/shuttle = shuttle_ref?.resolve()
@@ -191,6 +203,7 @@
 		return
 	INVOKE_ASYNC(src, PROC_REF(christen), user, shuttle, attacked, user.active_hand_index)
 
+/// Asks for the new name of the shuttle and smashes the bottle, renaming the shuttle if everything is still in place
 /obj/item/shuttle_blueprints/proc/christen(mob/living/user, obj/docking_port/mobile/custom/shuttle, atom/attacked, hand)
 	var/trait_source = REF(shuttle)
 	ADD_TRAIT(user, TRAIT_ATTEMPTING_CHRISTENING, trait_source)
@@ -290,12 +303,14 @@
 		rename_area(shuttle.default_area, new_name)
 		update_name()
 
+/// Shows the frame turfs to the user
 /obj/item/shuttle_blueprints/proc/start_visualizing(mob/user)
 	visualize_frame_turfs = TRUE
 	RegisterSignal(user, SIGNAL_ADDTRAIT(TRAIT_USER_SCOPED), PROC_REF(stop_visualizing))
 	prox_monitor.set_user(user)
 	prox_monitor.recalculate_field()
 
+/// Hides the frame turfs from the user
 /obj/item/shuttle_blueprints/proc/stop_visualizing(mob/user)
 	SIGNAL_HANDLER
 	visualize_frame_turfs = FALSE
@@ -313,6 +328,7 @@
 	. = ..()
 	UnregisterSignal(user, COMSIG_ENTER_AREA)
 
+/// Updates the UI when the user walks into the default area of the linked shuttle
 /obj/item/shuttle_blueprints/proc/on_user_enter_area(mob/source, area/new_area)
 	var/obj/docking_port/mobile/custom/shuttle = shuttle_ref?.resolve()
 	if(shuttle && shuttle.default_area == new_area)
@@ -377,6 +393,7 @@
 			data["problems"] = shuttle_expand_check(current_turf, linked_shuttle)
 	return data
 
+/// Links the blueprints to a shuttle, making them the master blueprint if is_master is TRUE
 /obj/item/shuttle_blueprints/proc/link_to_shuttle(obj/docking_port/mobile/custom/shuttle, is_master = FALSE)
 	shuttle_ref = WEAKREF(shuttle)
 	if(is_master)
@@ -384,10 +401,12 @@
 	RegisterSignal(shuttle, COMSIG_QDELETING, PROC_REF(on_shuttle_deleted))
 	update_appearance()
 
+/// Unlinks the blueprints when the linked shuttle gets deleted
 /obj/item/shuttle_blueprints/proc/on_shuttle_deleted()
 	SIGNAL_HANDLER
 	unlink(removing = TRUE)
 
+/// Unlinks the blueprints from their shuttle
 /obj/item/shuttle_blueprints/proc/unlink(removing = FALSE)
 	var/obj/docking_port/mobile/custom/shuttle = shuttle_ref.resolve()
 	if(!QDELETED(shuttle))
@@ -403,6 +422,7 @@
 	else
 		name = initial(name)
 
+/// Returns the name of the blueprints when linked to the given shuttle
 /obj/item/shuttle_blueprints/proc/get_linked_name(obj/docking_port/mobile/shuttle)
 	return "\improper [shuttle.name] blueprints"
 
@@ -429,6 +449,7 @@
 	. = ..()
 	. += get_shuttle_tip()
 
+/// Returns the examine lines explaining what the blueprints can be used for
 /obj/item/shuttle_blueprints/proc/get_shuttle_tip()
 	. = list()
 	if(!shuttle_ref)
@@ -716,6 +737,7 @@
 	attack_verb_simple = list("attack", "scan", "analyze")
 	base_desc = "A module designed to store the plans for one or more shuttles."
 	linked_desc = "A module designed to store the plans for one or more shuttles."
+	/// Weakrefs to every shuttle stored in this module
 	var/list/shuttles = list()
 
 /obj/item/shuttle_blueprints/borg/get_shuttle_tip()

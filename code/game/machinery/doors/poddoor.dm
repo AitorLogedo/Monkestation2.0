@@ -20,6 +20,7 @@
 	var/id = 1
 	var/open_sound = 'sound/machines/poddoors/blastdoor.ogg'
 	var/close_sound = 'sound/machines/poddoors/blastdoor.ogg'
+	/// If TRUE, the blast door shows up on shuttle navigation computers
 	var/show_nav_computer_icon = TRUE
 
 /datum/armor/door_poddoor

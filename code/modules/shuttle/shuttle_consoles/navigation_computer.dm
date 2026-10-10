@@ -22,11 +22,13 @@
 	var/view_range = 0
 	var/x_offset = 0
 	var/y_offset = 0
+	/// Turf types the shuttle is allowed to land on
 	var/list/whitelist_turfs = list(/turf/open/space, /turf/open/floor/plating, /turf/open/lava, /turf/open/openspace, /turf/open/misc)
 	var/see_hidden = FALSE
 	var/designate_time = 0
 	var/turf/designating_target_loc
 	var/jammed = FALSE
+	/// If set, the camera can also travel to z levels linked within this range of the shuttle z level stack
 	var/zlink_range = 0
 
 /obj/machinery/computer/camera_advanced/shuttle_docker/Initialize(mapload)
@@ -157,6 +159,7 @@
 		user.client.images -= to_remove
 		user.client.view_size.resetToDefault()
 
+/// Turns coordinates relative to the shuttle into the turf they point at, accounting for the rotation of the camera
 /obj/machinery/computer/camera_advanced/shuttle_docker/proc/shuttle_turf_from_coords(list/coords)
 	var/mob/eye/camera/remote/shuttle_docker/the_eye = eyeobj
 	var/shuttleDir = shuttle_port.dir
@@ -179,6 +182,7 @@
 
 	return locate(shuttle_port.x + adjustedCoords[1], shuttle_port.y + adjustedCoords[2], shuttle_port.z)
 
+/// Collects the helper images (airlocks, consoles...) of the shuttle to show them on the landing spot preview
 /obj/machinery/computer/camera_advanced/shuttle_docker/proc/gatherNavComputerIcons()
 	var/mob/eye/camera/remote/shuttle_docker/the_eye = eyeobj
 	var/list/placement_image_cache = the_eye.placement_images
@@ -375,6 +379,7 @@
 	use_visibility = FALSE
 	var/list/image/placement_images = list()
 	var/list/image/placed_images = list()
+	/// Helper images from nav_computer_icon shown on top of the landing spot preview
 	var/list/image/extra_images = list()
 
 /mob/eye/camera/remote/shuttle_docker/setLoc(turf/destination, force_update = FALSE)

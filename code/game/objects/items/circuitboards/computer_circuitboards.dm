@@ -224,6 +224,7 @@
 	build_path = /obj/machinery/computer/turbine_computer
 
 /obj/item/circuitboard/computer/shuttle
+	/// The id of the shuttle consoles built from this board link to, if not set they link to the shuttle they are built on
 	var/shuttle_id
 	greyscale_colors = CIRCUIT_COLOR_ENGINEERING
 

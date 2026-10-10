@@ -29,10 +29,12 @@
 	var/datum/shuttle_frame/frame = GLOB.shuttle_frames_by_turf[source]
 	frame.possibly_valid_changing_turfs[source] = TRUE
 
+/// Makes sure the lattice replacing this turf is still usable for shuttle construction
 /datum/element/shuttle_construction_turf/proc/pre_lattice_replacement(turf/source, list/post_successful_replacement_callbacks)
 	SIGNAL_HANDLER
 	post_successful_replacement_callbacks += CALLBACK(src, PROC_REF(register_lattice))
 
+/// Called after the turf changed, puts the construction traits back if the new turf is still valid (floors and walls are), otherwise removes it from its frame
 /datum/element/shuttle_construction_turf/proc/post_turf_changed(list/trait_sources, turf/new_turf)
 	var/datum/shuttle_frame/frame = GLOB.shuttle_frames_by_turf[new_turf]
 	frame.possibly_valid_changing_turfs -= new_turf
@@ -46,8 +48,10 @@
 	else
 		frame.remove_turf(new_turf)
 
+/// Gives the shuttle construction lattice element to the lattice that replaced this turf
 /datum/element/shuttle_construction_turf/proc/register_lattice(obj/structure/lattice/new_lattice)
 	new_lattice.AddElement(/datum/element/shuttle_construction_lattice)
 
+/// Once the turf is part of a shuttle, it no longer needs to be a construction turf
 /datum/element/shuttle_construction_turf/proc/on_turf_added_to_shuttle(turf/source)
 	REMOVE_TRAIT(source, TRAIT_SHUTTLE_CONSTRUCTION_TURF, ELEMENT_TRAIT(type))

@@ -2,9 +2,13 @@
 	name = "custom shuttle"
 	shuttle_id = "custom"
 	launch_status = UNLAUNCHED
+	/// The blueprints that created this shuttle, the only ones allowed to rechristen it
 	var/datum/weakref/master_blueprint
+	/// The area turfs added to the shuttle go in when they are not part of any custom area
 	var/area/default_area
+	/// The flight control console linked to this shuttle
 	var/datum/weakref/control_console
+	/// The navigation console linked to this shuttle
 	var/datum/weakref/navigation_console
 
 /obj/docking_port/mobile/custom/Initialize(mapload, list/areas)

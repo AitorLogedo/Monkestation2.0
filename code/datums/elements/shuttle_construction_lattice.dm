@@ -1,6 +1,7 @@
 /// Element used to specify that a lattice is part of an incomplete shuttle frame
 /datum/element/shuttle_construction_lattice
 	element_flags = ELEMENT_DETACH_ON_HOST_DESTROY
+	/// Every lattice with this element, keyed by the turf it is on
 	var/list/lattices_by_turf = list()
 
 /datum/element/shuttle_construction_lattice/Attach(obj/structure/lattice/target)
@@ -26,10 +27,12 @@
 		UnregisterSignal(source_turf, COMSIG_TURF_ADDED_TO_SHUTTLE)
 	UnregisterSignal(source, list(COMSIG_ATOM_EXAMINE, COMSIG_MOVABLE_MOVED, COMSIG_LATTICE_PRE_REPLACE_WITH_CATWALK))
 
+/// Warns that cutting the lattice ruins it for shuttle construction
 /datum/element/shuttle_construction_lattice/proc/on_examined(obj/source, mob/user, list/examine_list)
 	SIGNAL_HANDLER
 	examine_list += span_notice("Cutting this [source.name] will <i>ruin the treatment that makes it suitable for shuttle construction</i>.")
 
+/// Moves the shuttle construction trait from the old turf of the lattice to the new one
 /datum/element/shuttle_construction_lattice/proc/on_moved(obj/source, atom/old_loc)
 	SIGNAL_HANDLER
 	var/trait_source = REF(source)
@@ -43,13 +46,16 @@
 		RegisterSignal(new_turf, COMSIG_TURF_ADDED_TO_SHUTTLE, PROC_REF(on_turf_added_to_shuttle))
 		lattices_by_turf[new_turf] = source
 
+/// Makes sure the catwalk replacing this lattice is still usable for shuttle construction
 /datum/element/shuttle_construction_lattice/proc/on_replacing_with_catwalk(obj/source, list/callbacks)
 	SIGNAL_HANDLER
 	callbacks += CALLBACK(src, PROC_REF(register_catwalk))
 
+/// Gives this element to the catwalk that replaced the lattice
 /datum/element/shuttle_construction_lattice/proc/register_catwalk(obj/structure/lattice/catwalk/new_catwalk)
 	new_catwalk.AddElement(/datum/element/shuttle_construction_lattice)
 
+/// Once the turf is part of a shuttle, the lattice no longer needs to be a construction lattice
 /datum/element/shuttle_construction_lattice/proc/on_turf_added_to_shuttle(turf/source)
 	var/obj/structure/lattice/turf_lattice = lattices_by_turf[source]
 	turf_lattice?.RemoveElement(/datum/element/shuttle_construction_lattice)

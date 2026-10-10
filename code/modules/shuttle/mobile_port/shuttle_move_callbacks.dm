@@ -91,8 +91,8 @@ All ShuttleMove procs go here
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-// Return the move_move (based on the old), without any side effects.
-// This is for checking what would be moved if src is on a shuttle being moved.
+/// Return the move_move (based on the old), without any side effects.
+/// This is for checking what would be moved if src is on a shuttle being moved.
 /atom/movable/proc/hypotheticalShuttleMove(rotation, move_mode, obj/docking_port/mobile/moving_dock)
 	return move_mode
 
@@ -145,7 +145,7 @@ All ShuttleMove procs go here
 		return NONE
 	return MOVE_AREA
 
-// Called on areas to move their turf between areas
+/// Called on areas to move their turf between areas
 /area/proc/onShuttleMove(turf/oldT, turf/newT, obj/docking_port/mobile/shuttle, area/fallback_area)
 	if(newT == oldT) // In case of in place shuttle rotation shenanigans.
 		return TRUE

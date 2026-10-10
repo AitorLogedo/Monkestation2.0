@@ -26,6 +26,7 @@
 	///The mobile ship we are connected to.
 	var/obj/docking_port/mobile/connected_ship = null
 
+	/// Signals registered on our turf so we connect to a custom shuttle once it is built under us
 	var/static/list/connections = list(COMSIG_TURF_ADDED_TO_SHUTTLE = PROC_REF(on_turf_added_to_shuttle))
 
 /datum/armor/power_shuttle_engine
@@ -118,6 +119,7 @@
 			unsync_ship() //not part of the ship anymore
 			engine_state = ENGINE_UNWRENCHED
 
+/// Connects the engine to the shuttle our turf just became part of
 /obj/machinery/power/shuttle_engine/proc/on_turf_added_to_shuttle(turf/source, obj/docking_port/mobile/port)
 	SIGNAL_HANDLER
 	connect_to_shuttle(port = port)

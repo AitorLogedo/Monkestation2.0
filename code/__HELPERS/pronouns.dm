@@ -56,6 +56,7 @@
 /datum/proc/p_es(temp_gender)
 	. = "es"
 
+/// Reflexive pronoun ("itself"), mobs override it to use their gender
 /datum/proc/p_themselves(temp_gender)
 	return "itself"
 

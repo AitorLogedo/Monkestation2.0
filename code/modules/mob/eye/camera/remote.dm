@@ -133,6 +133,7 @@
 	else
 		sprint = initial
 
+/// Moves the camera to the neighboring z level in that direction when it reaches the map edge, if allow_z_transition() lets it
 /mob/eye/camera/remote/proc/transition_step(turf/destination, direction)
 	var/datum/space_level/from = SSmapping.get_level(destination.z)
 	var/datum/space_level/into = from.neigbours["[direction]"]
@@ -153,5 +154,6 @@
 	else
 		setLoc(destination)
 
+/// Returns TRUE if the camera can move from one z level to the other, by default only within the same level
 /mob/eye/camera/remote/proc/allow_z_transition(datum/space_level/from, datum/space_level/into)
 	return from == into
