@@ -28,6 +28,7 @@
 	if(target)
 		register_owner(target)
 
+///Starts overriding the bubble icon of the mob wearing or having this item/organ
 /datum/component/bubble_icon_override/proc/register_owner(mob/living/owner)
 	RegisterSignal(owner, COMSIG_GET_BUBBLE_ICON, PROC_REF(return_bubble_icon))
 	get_bubble_icon(owner)
@@ -43,6 +44,7 @@
 	if(target)
 		unregister_owner(target)
 
+///Stops overriding the bubble icon of the mob, going back to the next highest priority one or their default
 /datum/component/bubble_icon_override/proc/unregister_owner(mob/living/owner)
 	UnregisterSignal(owner, list(COMSIG_GET_BUBBLE_ICON))
 	get_bubble_icon(owner)
@@ -62,19 +64,23 @@
 		var/obj/item/organ/organ = parent
 		return organ.owner
 
+///Registers the wearer if the item was equipped in a slot it can be worn in
 /datum/component/bubble_icon_override/proc/on_equipped(obj/item/source, mob/equipper, slot)
 	SIGNAL_HANDLER
 	if(slot & source.slot_flags)
 		register_owner(equipper)
 
+///Unregisters whoever dropped the item
 /datum/component/bubble_icon_override/proc/on_dropped(obj/item/source, mob/dropper)
 	SIGNAL_HANDLER
 	unregister_owner(dropper)
 
+///Registers the mob the organ was implanted into
 /datum/component/bubble_icon_override/proc/on_organ_implanted(obj/item/organ/source, mob/owner)
 	SIGNAL_HANDLER
 	register_owner(owner)
 
+///Unregisters the mob the organ was removed from
 /datum/component/bubble_icon_override/proc/on_organ_removed(obj/item/organ/source, mob/owner)
 	SIGNAL_HANDLER
 	unregister_owner(owner)
@@ -91,6 +97,7 @@
 	var/bubble_icon = holder[1]
 	target.bubble_icon = bubble_icon || initial(target.bubble_icon)
 
+///Puts our bubble icon in the holder list if our priority is higher than the one already there
 /datum/component/bubble_icon_override/proc/return_bubble_icon(datum/source, list/holder)
 	SIGNAL_HANDLER
 	var/enemy_priority = holder[holder[1]]

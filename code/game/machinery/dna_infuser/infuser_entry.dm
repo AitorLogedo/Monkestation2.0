@@ -3,6 +3,7 @@ GLOBAL_LIST_INIT(infuser_entries, prepare_infuser_entries())
 /// All infuser entries, keyed by their type
 GLOBAL_LIST_INIT(infuser_entries_by_type, prepare_infuser_entries_by_type())
 
+///Builds the infuser_entries_by_type list out of GLOB.infuser_entries
 /proc/prepare_infuser_entries_by_type()
 	var/list/entries = list()
 	for(var/datum/infuser_entry/entry as anything in GLOB.infuser_entries)

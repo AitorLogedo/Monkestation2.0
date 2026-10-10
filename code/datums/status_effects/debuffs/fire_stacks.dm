@@ -343,15 +343,18 @@
 	if(HAS_TRAIT(owner, TRAIT_SLIPPERY_WHEN_WET))
 		no_longer_slippery()
 
+///Wetness decays slower for mobs with TRAIT_WET_FOR_LONGER
 /datum/status_effect/fire_handler/wet_stacks/proc/update_wet_stack_modifier()
 	SIGNAL_HANDLER
 	stack_modifier = HAS_TRAIT(owner, TRAIT_WET_FOR_LONGER) ? initial(stack_modifier) * 3.5 : initial(stack_modifier)
 
+///Makes the wet mob slippery while lying down, and immune to slipping on water itself
 /datum/status_effect/fire_handler/wet_stacks/proc/become_slippery()
 	SIGNAL_HANDLER
 	slipperiness = owner.AddComponent(/datum/component/slippery, 5 SECONDS, lube_flags = SLIPPERY_WHEN_LYING_DOWN)
 	ADD_TRAIT(owner, TRAIT_NO_SLIP_WATER, TRAIT_STATUS_EFFECT(id))
 
+///Removes the slipperiness given by become_slippery()
 /datum/status_effect/fire_handler/wet_stacks/proc/no_longer_slippery()
 	SIGNAL_HANDLER
 	QDEL_NULL(slipperiness)

@@ -1358,6 +1358,7 @@
 	UnregisterSignal(affected_mob, COMSIG_CARBON_ATTEMPT_BREATHE, PROC_REF(block_breath))
 	remove_paralysis(affected_mob)
 
+///Removes all the limb paralysis traits given by this reagent and resets the list of limbs left to paralyze
 /datum/reagent/toxin/tetrodotoxin/proc/remove_paralysis(mob/living/affected_mob)
 	// the initial() proc doesn't work for lists.
 	var/list/initial_list = list(

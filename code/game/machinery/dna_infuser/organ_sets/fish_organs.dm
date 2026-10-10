@@ -62,6 +62,7 @@
 		remove_speed_buff()
 	owner.mind?.adjust_experience(/datum/skill/fishing, -SKILL_EXP_JOURNEYMAN, silent = TRUE)
 
+///Fish people like eating good fishing bait, the better the bait the tastier it is
 /datum/status_effect/organ_set_bonus/fish/proc/get_perceived_food_quality(datum/source, datum/component/edible/edible, list/extra_quality)
 	SIGNAL_HANDLER
 	if(HAS_TRAIT(edible.parent, TRAIT_GREAT_QUALITY_BAIT))
@@ -78,6 +79,7 @@
 	owner.adjust_bodytemperature(-2 * seconds_between_ticks, min_temp = owner.standard_body_temperature)
 	owner.stamina?.adjust(1.5 * seconds_between_ticks)
 
+///Called when the mob gets wet or dries off, swaps between the wet buffs and the dry debuffs
 /datum/status_effect/organ_set_bonus/fish/proc/update_wetness(datum/source)
 	SIGNAL_HANDLER
 	if(HAS_TRAIT(owner, TRAIT_IS_WET)) //remove the debuffs from being dry
@@ -89,6 +91,7 @@
 	if(istype(owner.get_organ_slot(ORGAN_SLOT_EXTERNAL_TAIL), /obj/item/organ/external/tail/fish))
 		remove_speed_buff()
 
+///Debuffs for being dry: slower, sad and more vulnerable to damage (mostly burns)
 /datum/status_effect/organ_set_bonus/fish/proc/apply_debuff()
 	REMOVE_TRAIT(owner, TRAIT_GRABRESISTANCE, REF(src))
 	owner.add_movespeed_modifier(/datum/movespeed_modifier/fish_waterless)
@@ -104,6 +107,7 @@
 	human.physiology.stamina_mod *= 1.1
 	human.physiology.damage_resistance -= 16 //from +8% to -8%
 
+///Undoes apply_debuff() once the mob is wet again, also making them harder to grab
 /datum/status_effect/organ_set_bonus/fish/proc/remove_debuff()
 	ADD_TRAIT(owner, TRAIT_GRABRESISTANCE, REF(src)) //harder to grab when wet.
 	owner.remove_movespeed_modifier(/datum/movespeed_modifier/fish_waterless)
@@ -119,6 +123,7 @@
 	human.physiology.stamina_mod /= 1.1
 	human.physiology.damage_resistance += 16 //from -8% to +8%
 
+///Called when an organ is added or removed, gives or takes the crawling speed buff depending on having a fish tail
 /datum/status_effect/organ_set_bonus/fish/proc/check_tail(mob/living/carbon/source, obj/item/organ/organ, special)
 	SIGNAL_HANDLER
 	if(!HAS_TRAIT(owner, TRAIT_IS_WET) || !istype(organ, /obj/item/organ/external/tail/fish))
@@ -129,16 +134,19 @@
 		return
 	add_speed_buff()
 
+///Starts tracking the body position so the mob crawls faster while lying down
 /datum/status_effect/organ_set_bonus/fish/proc/add_speed_buff(datum/source)
 	SIGNAL_HANDLER
 	RegisterSignal(owner, COMSIG_LIVING_SET_BODY_POSITION, PROC_REF(check_body_position))
 	check_body_position()
 
+///Stops tracking the body position and removes the crawling speed buff
 /datum/status_effect/organ_set_bonus/fish/proc/remove_speed_buff(datum/source)
 	SIGNAL_HANDLER
 	UnregisterSignal(owner, COMSIG_LIVING_SET_BODY_POSITION)
 	owner.remove_movespeed_modifier(/datum/movespeed_modifier/fish_flopping)
 
+///Adds the crawling speed buff while lying down, removes it otherwise
 /datum/status_effect/organ_set_bonus/fish/proc/check_body_position(datum/source)
 	SIGNAL_HANDLER
 	if(owner.body_position == LYING_DOWN)
@@ -204,11 +212,13 @@
 	owner.remove_actionspeed_modifier(/datum/actionspeed_modifier/fish_on_water)
 	UnregisterSignal(owner, list(COMSIG_MOVABLE_MOVED, COMSIG_LIVING_GIBBER_ACT))
 
+///Adds some extra fish fillets to the gibber results when the owner is gibbed
 /obj/item/organ/external/tail/fish/proc/on_gibber_processed(mob/living/carbon/owner, mob/living/user, obj/machinery/gibber, list/results)
 	SIGNAL_HANDLER
 	for(var/iteration in 1 to fillet_amount * 0.5)
 		results += new fillet_type
 
+///Gives the owner faster movement and actions while standing in water, removes them when leaving it
 /obj/item/organ/external/tail/fish/proc/check_location(mob/living/carbon/source, atom/movable/old_loc, dir, forced)
 	SIGNAL_HANDLER
 	var/was_water = istype(old_loc, /turf/open/water)
@@ -252,6 +262,7 @@
 	/// Bodypart overlay applied to the chest where the lungs are in
 	var/datum/bodypart_overlay/simple/gills/gills
 
+	///If TRUE, these lungs come with visible gills (chest overlay and a line when examined)
 	var/has_gills = TRUE
 
 /obj/item/organ/internal/lungs/fish/Initialize(mapload)

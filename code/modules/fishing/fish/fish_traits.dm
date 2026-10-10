@@ -393,6 +393,7 @@ GLOBAL_LIST_INIT(fish_traits, init_subtypes_w_path_keys(/datum/fish_trait, list(
 	. = ..()
 	RegisterSignal(fish, COMSIG_ITEM_ATTACK, PROC_REF(attacked_someone))
 
+///Hitting someone with an alive fish that has this trait inks them, blinding and confusing them for a bit
 /datum/fish_trait/ink/proc/attacked_someone(obj/item/fish/source, mob/living/target, mob/living/user)
 	SIGNAL_HANDLER
 	if(source.status == FISH_DEAD || HAS_TRAIT(source, TRAIT_FISH_INK_ON_COOLDOWN))

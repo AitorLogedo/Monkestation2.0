@@ -26,6 +26,7 @@
 	var/mob/living/victim = target
 	blind_em(victim, !iscarbon(victim) || victim.get_bodypart(BODY_ZONE_HEAD))
 
+///Blinds and confuses the victim, stronger (and knocks down) if the firer has the fish organ set bonus active
 /obj/projectile/ink_spit/proc/blind_em(mob/living/victim, can_splat_on)
 	if(!can_splat_on)
 		return
